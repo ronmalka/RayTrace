@@ -1,0 +1,126 @@
+#include "raytrace.h"
+#include <iostream>
+#include "GL/glew.h"
+
+
+
+static void printMat(const glm::mat4 mat)
+{
+	std::cout<<" matrix:"<<std::endl;
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+			std::cout<< mat[j][i]<<" ";
+		std::cout<<std::endl;
+	}
+}
+
+raytrace::raytrace() : Scene()
+{
+	counter = 1;
+	power = 2;
+}
+
+//raytrace::raytrace(float angle ,float relationWH, float near, float far) : Scene(angle,relationWH,near,far)
+//{ 	
+//}
+
+void raytrace::Init()
+{		
+	unsigned int texIDs[3] = { 0 , 1, 0};
+	unsigned int slots[3] = { 0 , 1, 0 };
+	
+	AddShader("../res/shaders/pickingShader");	
+	AddShader("../res/shaders/myShader");
+	AddTexture("../res/textures/pal.png",1);
+	//TextureDesine(840, 840);
+
+	AddMaterial(texIDs,slots, 1);
+	
+	AddShape(Plane, -1, TRIANGLES);
+	SetShapeShader(0, 1);
+}
+
+void raytrace::Update(const glm::mat4 &MVP,const glm::mat4 &Model,const int  shaderIndx)
+{	
+	if(counter)
+		counter++;
+	Shader *s = shaders[shaderIndx];
+	int r = ((pickedShape+1) & 0x000000FF) >>  0;
+	int g = ((pickedShape+1) & 0x0000FF00) >>  8;
+	int b = ((pickedShape+1) & 0x00FF0000) >> 16;
+	if (shapes[pickedShape]->GetMaterial() >= 0 && !materials.empty())
+		BindMaterial(s, shapes[pickedShape]->GetMaterial());
+	//textures[0]->Bind(0);
+	s->Bind();
+	if (shaderIndx != 1)
+	{
+		s->SetUniformMat4f("MVP", MVP);
+		s->SetUniformMat4f("Normal", Model);
+	}
+	else
+	{
+		s->SetUniformMat4f("MVP", glm::mat4(1));
+		s->SetUniformMat4f("Normal", glm::mat4(1));
+	}
+	//s->SetUniform1i("sampler1", materials[shapes[pickedShape]->GetMaterial()]->GetSlot(0));
+	//if(shaderIndx!=1)
+	//	s->SetUniform1i("sampler2", materials[shapes[pickedShape]->GetMaterial()]->GetSlot(1));
+	//s->SetUniform1ui("counter", counter);
+	//s->SetUniform1f("x", x);
+	//s->SetUniform1f("y", y);
+	//s->SetUniform1ui("power", power);
+	s->Unbind();
+}
+
+void raytrace::UpdatePosition(float xpos,  float ypos)
+{
+	int viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+	x = xpos / viewport[2];
+	y = 1 - ypos / viewport[3];
+}
+
+void raytrace::WhenRotate()
+{
+	std::cout << "x "<<x<<", y "<<y<<std::endl;
+	
+}
+
+void raytrace::WhenTranslate()
+{
+}
+
+
+
+void raytrace::Motion()
+{
+	if(isActive)
+	{
+	}
+}
+
+unsigned int raytrace::TextureDesine(int width, int height)
+{
+	unsigned char* data = new unsigned char[width * height * 4];
+	for (size_t i = 0; i < width; i++)
+	{
+		for (size_t j = 0; j < height; j++)
+		{
+			data[(i * height + j) * 4] = (i + j) % 256;
+			data[(i * height + j) * 4 + 1] = (i + j * 2) % 256;
+			data[(i * height + j) * 4 + 2] = (i * 2 + j) % 256;
+			data[(i * height + j) * 4 + 3] = (i * 3 + j) % 256;
+		}
+	}
+	textures.push_back(new Texture(width, height));
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data); //note GL_RED internal format, to save 
+	glBindTexture(GL_TEXTURE_2D, 0);
+	delete[] data;
+	return(textures.size() - 1);
+}
+
+raytrace::~raytrace(void)
+{
+
+}
