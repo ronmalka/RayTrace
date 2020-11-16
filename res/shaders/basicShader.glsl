@@ -1,4 +1,4 @@
- #version 130 
+#version 330 core
 
 uniform vec4 eye;
 uniform vec4 ambient;
@@ -24,13 +24,11 @@ vec3 calcDirVec()
     int width = sizes.z;
     int high = sizes.w;
 
-    vec2 pc = vec2(high / 2 , width / 2 ); 
-
-    vec3 p0 = vec3 (eye.xyz );
-
-    vec3 v= vec3(0,1,0) ;
+    vec3 pc = vec3(high/2,width/2,0);
+    vec3 p0 = vec3(eye.xyz);
+    vec3 v= vec3(0,1,0);
  
-    vec3 t = normalize(position1 - eye);
+    vec3 t = normalize(position1 - p0);
 
     vec3 b = normalize(cross(v,t));
 
@@ -38,18 +36,18 @@ vec3 calcDirVec()
     
     vec3 c = eye.xyz + t;
 
-    float rx = width /2 ;
-    float ry = high / 2;
-    float R = 1 ;
+    float rx = width/2 ;
+    float ry = high/2;
+    float R = 1;
 
     vec3 p = pc + b*(position1.x - abs(rx/2)) * R - v_normal * (position1.y - abs(ry/2)) * R ;
-
+    return p;
      
 }
 
 //calc shape intersect - sphere, plane
 
-bool intersectionSphere(vec3 sourcePoint,vec3 v, vec4 sphereInfo, out Hit hit)
+bool isIntersectSphere(vec3 sourcePoint,vec3 v, vec4 sphereInfo, out Hit hit)
 {
     float r =sphereInfo.w;
     float t = dot(sourcePoint - sphereInfo.xyz , v);
@@ -71,7 +69,9 @@ bool intersectionSphere(vec3 sourcePoint,vec3 v, vec4 sphereInfo, out Hit hit)
     
 }
 
-
+bool isIntersectPlane(vec3 sourcePoint,vec3 v, vec4 sphereInfo, out Hit hit){
+    return true;
+}
 //loop for every object and check hit with the ray
 
 //init color
@@ -79,52 +79,40 @@ bool intersectionSphere(vec3 sourcePoint,vec3 v, vec4 sphereInfo, out Hit hit)
 //loop for every depth and ray 
 
 
-float intersection(vec3 sourcePoint,vec3 v)
+bool intersection(vec3 sourcePoint,vec3 v,out Hit hit_ret,out vec3 pointHit)
 {
-    float color;
-    Hit hit;
-    int i = 0 ; 
-
-    int minHitIndex = -1;
-    float minDistance = 999999.;
+    float minDistance = -1.;
     vec3 enter = vec3(0,0,0);
-    for( i=0; i < sizes.x; i++)
+    for(int i=0; i < sizes.x; i++)
     {
+        Hit hit;
         if (objects[i].w >= 0){
-            if(intersectionSphere(sourcePoint, v, objects[i],hit)){ 
-                if(hit.enter < minDistance){
-                    enter = sourcePoint.xyz + v*hit.enter; 
-                    minHitIndex = i;
+            if(isIntersectSphere(sourcePoint, v, objects[i],hit)){ 
+                if(minDistance == -1 || hit.enter < minDistance){
+                    pointHit = sourcePoint.xyz + v*hit.enter; 
                     minDistance = hit.enter;
+                    hit_ret = hit;
                 }  
-                color = calcColor(); 
            }
         }     
         else{
-            if(intersectionPlane(sourcePoint, v, objects[i],hit)){
-                if(hit.enter < minDistance){
-                    enter = sourcePoint.xyz + v*hit.enter;
-                    minHitIndex = i;
-                    minDistance = distance;
+            if(isIntersectPlane(sourcePoint, v, objects[i],hit)){
+                if(minDistance == -1 || hit.enter < minDistance){
+                    pointHit = sourcePoint.xyz + v*hit.enter;
+                    minDistance = hit.enter;
+                    hit_ret = hit;
                 }  
-                color = calcColor();   
             }
         }
          
     }
-    if(minHitIndex != -1){
-        color += calcLight(objects[minHitIndex]);
-    }
-    else{
-        color = backgroundColor;
-    }
-    return color;
+    return minDistance != -1;
     
 }
 
-vec3 colorCalc( vec3 intersectionPoint)
+vec3 colorCalc(vec3 srcPoint)
 {
-    vec3 color = vec3(1,0,1);
+    vec3 color = vec3(0.5,0,0.5);
     
     return color;
 }

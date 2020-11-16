@@ -31,7 +31,7 @@ void raytrace::Init()
 	unsigned int slots[3] = { 0 , 1, 0 };
 	
 	AddShader("../res/shaders/pickingShader");	
-	AddShader("../res/shaders/myShader");
+	AddShader("../res/shaders/basicShader");
 	AddTexture("../res/textures/pal.png",1);
 	//TextureDesine(840, 840);
 
@@ -64,12 +64,20 @@ void raytrace::Update(const glm::mat4 &MVP,const glm::mat4 &Model,const int  sha
 		s->SetUniformMat4f("Normal", glm::mat4(1));
 	}
 	//s->SetUniform1i("sampler1", materials[shapes[pickedShape]->GetMaterial()]->GetSlot(0));
-	//if(shaderIndx!=1)
-	//	s->SetUniform1i("sampler2", materials[shapes[pickedShape]->GetMaterial()]->GetSlot(1));
+	if(shaderIndx!=1)
+		s->SetUniform1i("sampler2", materials[shapes[pickedShape]->GetMaterial()]->GetSlot(1));
 	//s->SetUniform1ui("counter", counter);
 	//s->SetUniform1f("x", x);
 	//s->SetUniform1f("y", y);
 	//s->SetUniform1ui("power", power);
+	s->SetUniform4fv("objects",scnData->objects.data(),scnData->objects.size());
+	s->SetUniform4fv("objColors", scnData->colors.data(), scnData->colors.size());
+	s->SetUniform4fv("lightsDirection", scnData->directions.data(), scnData->directions.size());
+	s->SetUniform4fv("lightsIntensity", scnData->intensities.data(), scnData->intensities.size());
+	s->SetUniform4fv("lightPosition", scnData->lights.data(), scnData->lights.size());
+	s->SetUniform4f("eye",scnData->eye[0], scnData->eye[1], scnData->eye[2], scnData->eye[3]);
+	s->SetUniform4f("ambient",scnData->ambient[0], scnData->ambient[1], scnData->ambient[2], scnData->ambient[3]);
+	s->SetUniform4i("sizes", scnData->sizes[0], scnData->sizes[1], scnData->sizes[2], scnData->sizes[3]);
 	s->Unbind();
 }
 
@@ -83,7 +91,7 @@ void raytrace::UpdatePosition(float xpos,  float ypos)
 
 void raytrace::WhenRotate()
 {
-	std::cout << "x "<<x<<", y "<<y<<std::endl;
+	//std::cout << "x "<<x<<", y "<<y<<std::endl;
 	
 }
 

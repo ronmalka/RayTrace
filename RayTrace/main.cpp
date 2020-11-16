@@ -15,7 +15,10 @@ int main(int argc,char *argv[])
 	Display display(DISPLAY_WIDTH, DISPLAY_HEIGHT, "OpenGL");
 	Renderer* rndr = new Renderer(CAMERA_ANGLE, (float)DISPLAY_WIDTH / 2 / DISPLAY_HEIGHT, NEAR, FAR); // adding a camera
 	raytrace *scn = new raytrace();  //initializing scene
-	
+	SceneData *our_data = new SceneData();
+	SceneParser* scnParser = new SceneParser("scene.txt", our_data);
+	scn->setScnData(our_data);
+
 	Init(display); //adding callback functions
 	scn->Init();    //adding shaders, textures, shapes to scene
 	rndr->Init(scn,x,y); // adding scene and viewports to the renderer
@@ -29,5 +32,7 @@ int main(int argc,char *argv[])
 		display.PollEvents();		
 	}
 	delete scn;
+	delete our_data;
+	delete scnParser;
 	return 0;
 }

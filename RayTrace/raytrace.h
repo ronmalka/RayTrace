@@ -1,5 +1,6 @@
 #pragma once
 #include "scene.h"
+#include "sceneParser.h"
 
 class raytrace : public Scene
 {
@@ -17,6 +18,7 @@ public:
 	~raytrace(void);
 	inline void ResetCounter() { tmp = counter; counter = 0; }
 	inline void SetCounter() { counter = tmp; }
+	inline void setScnData(SceneData* data) { scnData = data; }
 
 	void UpdatePosition( float xpos, float ypos);
 private:
@@ -24,5 +26,6 @@ private:
 	unsigned int tmp;
 	float x, y;
 	unsigned int power;
+	SceneData* scnData;
 };
 

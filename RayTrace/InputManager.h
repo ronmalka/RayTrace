@@ -7,20 +7,20 @@
 
 	void mouse_callback(GLFWwindow* window,int button, int action, int mods)
 	{	
-		Renderer* rndr = (Renderer*)glfwGetWindowUserPointer(window);
-		raytrace* scn = (raytrace*)rndr->GetScene();
-		if (action == GLFW_PRESS)
-		{
-			double x2, y2;
-			glfwGetCursorPos(window, &x2, &y2);
-			if (rndr->Picking((int)x2, (int)y2))
-				rndr->UpdatePosition(x2, y2);
-			scn->ResetCounter();
-		}
-		else
-			scn->SetCounter();
-		//std::cout << "yes" << std::endl;
-		rndr->ClearDrawFlag(1,1);
+		//Renderer* rndr = (Renderer*)glfwGetWindowUserPointer(window);
+		//raytrace* scn = (raytrace*)rndr->GetScene();
+		//if (action == GLFW_PRESS)
+		//{
+		//	double x2, y2;
+		//	glfwGetCursorPos(window, &x2, &y2);
+		//	if (rndr->Picking((int)x2, (int)y2))
+		//		rndr->UpdatePosition(x2, y2);
+		//	scn->ResetCounter();
+		//}
+		//else
+		//	scn->SetCounter();
+		////std::cout << "yes" << std::endl;
+		//rndr->ClearDrawFlag(1,1);
 	}
 	
 	void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
