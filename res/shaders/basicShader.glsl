@@ -1,5 +1,7 @@
-#version 330 core
+#version 130 
 
+#define INFINITY 1000.5693
+#define MAX_LEVEL 5
 uniform vec4 eye;
 uniform vec4 ambient;
 uniform vec4[20] objects;
@@ -7,27 +9,28 @@ uniform vec4[20] objColors;
 uniform vec4[10] lightsDirection;
 uniform vec4[10] lightsIntensity;
 uniform vec4[10] lightPosition;
-uniform ivec4 sizes; //{number of objects , number of lights , width, hight}  
+uniform ivec4 sizes; //{number of objects , number of lights , mirrors}  
+
 in vec3 position1;
 
-struct Hit 
+struct Hit
 {
-    vec3 hitPoint;
-    vec3 normal;
     int hitIndex;
     float t;
+    vec3 hitPoint;
+    vec3 normal;
 };
 
 
-//calc shape intersect - sphere, plane
-vec4 getSpotlight(int index){
-	int count = -1;
-	for(int i = 0; i <= index; i++){
-		if(lightsDirection[i].w > 0.5){
-			count = count+1;
-		}
-	}
-	return lightPosition[count];
+float isIntersectPlane(vec3 P0,vec3 V, int oIndex)
+{
+    vec4 plane = objects[oIndex];
+	vec3 N = normalize(plane.xyz); 
+    vec3 Q0 = vec3(0,0,-plane.w/plane.z); //point on Plane
+    float t = dot(N,(Q0-P0)/dot(N,V));
+
+    if(t<=0) return INFINITY;
+    return t;
 }
 
 bool solveQuadricEquasion(float a,float b,float c,out vec2 result){
@@ -39,168 +42,166 @@ bool solveQuadricEquasion(float a,float b,float c,out vec2 result){
     return true;
 }
 
-bool isIntersectSphere(vec3 P0, vec3 V,int oIndex, vec4 sphere, out Hit hit){
+float isIntersectSphere(vec3 P0,vec3 V, int oIndex)
+{
+    vec4 sphere = objects[oIndex];
+	float t = INFINITY;
     float a = 1.0;
-    vec3 tmp = P0-objects[oIndex].xyz;
+    vec3 tmp = P0-sphere.xyz;
     float b = dot(2*V,tmp);
-    float c = pow(length(tmp),2) - sphere.w*sphere.w;
+    float c = dot(tmp,tmp) - sphere.w*sphere.w;
 
     vec2 result;
-    if(!solveQuadricEquasion(a,b,c,result)) return false;
+    if(!solveQuadricEquasion(a,b,c,result)) return INFINITY;
 
-    float t = min(result.x,result.y);
-    if(t < 0){
-        t = max(result.x,result.y);
-    }
-    if(t <= 0.0) return false;
-
-    hit.hitPoint = P0+t*V;
-    hit.hitIndex = oIndex;
-    hit.normal = normalize(hit.hitPoint - sphere.xyz);
-    hit.t = t;
-
-    return true;
-
+	t=min(result.x,result.y);
+	if (t<0){
+		t=max(result.x,result.y);
+	}
+	if(t <=0.0){
+		t = INFINITY;	
+	}
+    return t; 
 }
 
-bool isIntersectPlane(vec3 P0, vec3 V,int oIndex, vec4 plane, out Hit hit){
-    vec3 N = normalize(plane.xyz); 
-    vec3 Q0 = vec3(0,0,-plane.w/plane.z); //point on Plane
-    float t = dot(N,(Q0-P0)/dot(N,V));
-
-    if(t<=0) return false;
-    
-    hit.hitPoint = P0 + t*V;
-    hit.hitIndex = oIndex;
-    hit.normal = N;
-    hit.t = t;
-
-    return true;
+vec4 getSpotlight(int index){
+	int count = -1;
+	for(int i = 0; i <= index; i++){
+		if(lightsDirection[i].w > 0.5){
+			count = count+1;
+		}
+	}
+	return lightPosition[count];
 }
 
-bool intersection(vec3 P0,vec3 V,out Hit hit_ret,int currObjIndex)
+Hit findIntersection(vec3 sourcePoint,vec3 V, int currObject)
 {
-    float minDistance = 9999;
-    bool found = false;
-    for(int i=0; i < sizes.x; i++)
-    {
-        bool flag = false;
-        Hit hit;
-        if(i!=currObjIndex){
+	Hit ans;
+	float t = 0;
+	ans.t = INFINITY;
+	for(int i = 0; i < sizes[0]; i++){
+        if(i!=currObject){
             if(objects[i].w > 0.0){
-                flag = isIntersectSphere(P0, V, i, objects[i], hit);
+                t = isIntersectSphere(sourcePoint,V, i);
             }
             else{
-                flag = isIntersectPlane(P0, V, i, objects[i],hit);
+                t = isIntersectPlane(sourcePoint,V, i);
             }
-            if(flag){
-                if(!found || hit.t < minDistance){
-                    minDistance = hit.t;
-                    hit_ret = hit;
-                    found = true;
-                } 
-            }  
+            if(t < ans.t){
+                ans.t=t;
+                ans.hitIndex = i;
+            }
         }
-        
-    }
-    return found;
+	}
+	ans.hitPoint = sourcePoint + ans.t*V;
+    if(objects[ans.hitIndex].w > 0.0){
+        ans.normal = ans.hitPoint - objects[ans.hitIndex].xyz;
+	}
+    else{
+		ans.normal = -objects[ans.hitIndex].xyz;
+	}
+    return ans;
     
 }
 
 
-bool isOccluded(Hit hit,int lightIndex)
-{
-    //Check here if you are hit other object (that is not yourself!), if yes color is black
-    vec3 V;
-    if(lightsDirection[lightIndex].w > 0.5)//Spotlight
-    {
-        vec4 spot = getSpotlight(lightIndex);
-        vec3 L = normalize(hit.hitPoint - spot.xyz);
-        vec3 D = normalize(lightsDirection[lightIndex].xyz);
-        if(dot(D,L) < spot.w) return true;
-        V = -L;
-    }
-    else//Directonal
-    {
-        V = -normalize(lightsDirection[lightIndex].xyz);
-    }
-    Hit next_hit;
-    
-    if(intersection(hit.hitPoint,V, next_hit, hit.hitIndex)){
-        if(lightsDirection[lightIndex].w > 0.5){
-            vec4 spot = getSpotlight(lightIndex);
-            if(length(spot.xyz - hit.hitPoint) > length(next_hit.hitPoint - hit.hitPoint)){
-                return true;
-            }
-        }
-        else{
+bool isOccluded(vec3 P0, int lightIndex,int currObject){
+	vec4 currLight = lightsDirection[lightIndex];
+	vec3 V;
+	if(currLight.w > 0.5){
+		vec4 spot = getSpotlight(lightIndex);
+        vec3 D = normalize(currLight.xyz);
+        vec3 L = normalize(P0 - spot.xyz);
+        if(dot(D,L) < spot.w){
             return true;
         }
-    }
-    return false;
+		V = normalize(spot.xyz - P0);
+	}
+    else{
+		V = -normalize(currLight.xyz);
+	}
+	Hit hit = findIntersection(P0, V, currObject);
+    if(hit.t != INFINITY){
+        if(currLight.w == 1.0){
+            vec4 spot = getSpotlight(lightIndex);
+            if(length(hit.hitPoint - P0) < length(spot.xyz - P0))
+                return true;
+        }
+	}
+	return false;
 }
 
-vec3 colorCalc(vec3 srcPoint,Hit hit)
+vec3 colorCalc(Hit hit, vec3 P0)
 {
-    vec3 color;
-	Hit currhit = hit;
-	vec3 curr_sourcePoint = srcPoint;
-	vec3 Ka = objColors[currhit.hitIndex].xyz;
-    vec3 Kd = Ka;
-	vec3 diffuse=vec3(0,0,0);
-	vec3 specular=vec3(0,0,0);
-	if(objects[currhit.hitIndex].w < 0)
-	{
-		vec3 p = currhit.hitPoint;
-		if(p.x * p.y >=0){
-			if((mod(int(1.5*p.x),2) == mod(int(1.5*p.y),2)))
-			{
-				Ka=0.5*Ka;
-			}
-		}
-		else{
-			if((mod(int(1.5*p.x),2) != mod(int(1.5*p.y),2)))
-			{
-				Ka=0.5*Ka;
-			}
-		}
-	}
-
-	vec3 KaIamb = Ka*(ambient.xyz);
-	vec3 Ks = vec3(0.7,0.7,0.7);
-	for(int i = 0; i < sizes[1]; i++){
-		if(!isOccluded(currhit, i)){
-			vec3 N = normalize(hit.normal);
-			vec3 L;
-			if(lightsDirection[i].w == 1.0){
-				vec3 sl_pos = getSpotlight(i).xyz;
-				L = normalize(sl_pos - currhit.hitIndex);
+	int level = 0;
+	while(level <= MAX_LEVEL){
+		vec3 Ka = objColors[hit.hitIndex].xyz;
+		vec3 Kd = Ka;
+		vec3 Ks = vec3(0.7,0.7,0.7);
+		vec3 color = vec3(0,0,0);
+		vec3 diffuse = vec3(0,0,0);
+		vec3 specular = vec3(0,0,0);
+		if(objects[hit.hitIndex].w < 0)
+		{
+			vec3 p= hit.hitPoint;
+			if(p.x * p.y >=0){
+				if((mod(int(1.5*p.x),2) == mod(int(1.5*p.y),2)))
+				{
+					Ka=0.5*Ka;
+				}
 			}
 			else{
-				L = -normalize(lightsDirection[i].xyz);
-			}
-            vec3 D = lightsDirection[i].xyz;
-			vec3 Ili = lightsIntensity[i].xyz;
-			if((dot(N,L))>0){
-				diffuse += Kd*(dot(N,L))*Ili;
-			}
-			vec3 V = normalize(srcPoint - hit.hitPoint);
-			vec3 R = reflect(-L,N);
-			if((dot(V,R))>0){
-				specular += Ks*(pow(dot(V,R),objColors[hit.hitIndex].w))*Ili;
+				if((mod(int(1.5*p.x),2) != mod(int(1.5*p.y),2)))
+				{
+					Ka=0.5*Ka;
+				}
 			}
 		}
+		for(int i = 0; i < sizes[1]; i++){
+			if(!isOccluded(hit.hitPoint, i, hit.hitIndex)){
+				vec3 L;
+				vec3 N = hit.normal;
+				if(lightsDirection[i].w > 0.5){
+					L = normalize(getSpotlight(i).xyz - hit.hitPoint);
+				}
+				else{
+					L = -normalize(lightsDirection[i].xyz);
+				}
+				vec3 IL = lightsIntensity[i].xyz*dot(N,L);
+				vec3 V = normalize(P0 - hit.hitPoint);
+				vec3 R = reflect(-L,N);
+				
+				float dotDiffuse = dot(N,L);
+				float dotSpec = dot(V,R);
+				if(dotSpec > 0){
+					color += Ks*(pow(dotSpec,objColors[hit.hitIndex].w))*IL;
+				}
+				if(dotDiffuse > 0){
+					color += Kd*(dotDiffuse)*IL;
+				}	
+				color += Ka*ambient.xyz;
+			}
+		}
+		if (hit.hitIndex >= sizes.z || level == MAX_LEVEL) return color;
+		else{ //Do Reflect
+			vec3 dirToObject = normalize(hit.hitPoint - P0);
+			P0 = hit.hitPoint;
+			vec3 newV = normalize(reflect(dirToObject,hit.normal));
+			Hit tmp_hit = findIntersection(P0,newV,hit.hitIndex);
+			if(tmp_hit.t == INFINITY) return vec3(0,0,0);
+			level++;
+			hit = tmp_hit;
+		}
+		
 	}
-	color = KaIamb + diffuse + specular;
-    return color;
+    return vec3(0,0,0);
 }
 
+
 void main()
-{
-    Hit hit;
-    vec3 V = normalize(position1 - eye.xyz);
-    if(!intersection(eye.xyz,V,hit,-1))
-        gl_FragColor = vec4(0.5,0,0.2,1); //Flat background color
-    else
-        gl_FragColor = vec4(colorCalc(eye.xyz,hit),1);      
+{	
+	vec3 v =normalize(position1 - eye.xyz);
+	Hit hit = findIntersection(eye.xyz, v,-1);
+    if(hit.t == INFINITY) gl_FragColor = vec4(0,0,0,1);
+    else gl_FragColor = vec4(colorCalc(hit, eye.xyz),1);
 }
