@@ -95,10 +95,10 @@ Hit findIntersection(vec3 sourcePoint,vec3 V, int currObject)
 	}
 	ans.hitPoint = sourcePoint + ans.t*V;
     if(objects[ans.hitIndex].w > 0.0){
-        ans.normal = ans.hitPoint - objects[ans.hitIndex].xyz;
+        ans.normal = normalize(ans.hitPoint - objects[ans.hitIndex].xyz);
 	}
     else{
-		ans.normal = -objects[ans.hitIndex].xyz;
+		ans.normal = normalize(-objects[ans.hitIndex].xyz);
 	}
     return ans;
     
@@ -179,9 +179,10 @@ vec3 colorCalc(Hit hit, vec3 P0)
 				if(dotDiffuse > 0){
 					color += Kd*(dotDiffuse)*IL;
 				}	
-				color += Ka*ambient.xyz;
+				
 			}
 		}
+		color += Ka*ambient.xyz;
 		if (hit.hitIndex >= sizes.z || level == MAX_LEVEL) return color;
 		else{ //Do Reflect
 			vec3 dirToObject = normalize(hit.hitPoint - P0);
