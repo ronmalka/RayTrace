@@ -10,7 +10,9 @@ uniform vec4[10] lightsDirection;
 uniform vec4[10] lightsIntensity;
 uniform vec4[10] lightPosition;
 uniform ivec4 sizes; //{number of objects , number of lights , mirrors}  
-
+uniform float zoom;
+uniform float offset_x; 
+uniform float offset_y;
 in vec3 position1;
 
 struct Hit
@@ -122,11 +124,14 @@ bool isOccluded(vec3 P0, int lightIndex,int currObject){
 	}
 	Hit hit = findIntersection(P0, V, currObject);
     if(hit.t != INFINITY){
-        if(currLight.w == 1.0){
+        if(currLight.w > 0.5){
             vec4 spot = getSpotlight(lightIndex);
             if(length(hit.hitPoint - P0) < length(spot.xyz - P0))
                 return true;
         }
+		else{
+			return true;
+		}
 	}
 	return false;
 }
@@ -201,7 +206,11 @@ vec3 colorCalc(Hit hit, vec3 P0)
 
 void main()
 {	
-	vec3 v =normalize(position1 - eye.xyz);
+	vec3 tmpPosition = position1;
+	tmpPosition.x += offset_x;
+	tmpPosition.y += offset_y;
+	tmpPosition = tmpPosition * zoom;
+	vec3 v =normalize(tmpPosition - eye.xyz);
 	Hit hit = findIntersection(eye.xyz, v,-1);
     if(hit.t == INFINITY) gl_FragColor = vec4(0,0,0,1);
     else gl_FragColor = vec4(colorCalc(hit, eye.xyz),1);
