@@ -1,7 +1,5 @@
 #version 130 
 
-#define INFINITY 1000.5693
-#define MAX_LEVEL 5
 uniform vec4 eye;
 uniform vec4 ambient;
 uniform vec4[20] objects;
@@ -11,9 +9,10 @@ uniform vec4[10] lightsIntensity;
 uniform vec4[10] lightPosition;
 uniform ivec4 sizes; //{number of objects , number of lights , mirrors}  
 uniform float zoom;
-uniform float offset_x; 
-uniform float offset_y;
 in vec3 position1;
+
+#define LEVELS 5
+#define INFINITY 9999
 
 struct Hit
 {
@@ -139,7 +138,7 @@ bool isOccluded(vec3 P0, int lightIndex,int currObject){
 vec3 colorCalc(Hit hit, vec3 P0)
 {
 	int level = 0;
-	while(level <= MAX_LEVEL){
+	while(LEVELS >= level){
 		vec3 Ka = objColors[hit.hitIndex].xyz;
 		vec3 Kd = Ka;
 		vec3 Ks = vec3(0.7,0.7,0.7);
@@ -188,7 +187,7 @@ vec3 colorCalc(Hit hit, vec3 P0)
 			}
 		}
 		color += Ka*ambient.xyz;
-		if (hit.hitIndex >= sizes.z || level == MAX_LEVEL) return color;
+		if (hit.hitIndex >= sizes.z || level == LEVELS) return color;
 		else{ //Do Reflect
 			vec3 dirToObject = normalize(hit.hitPoint - P0);
 			P0 = hit.hitPoint;
@@ -207,8 +206,8 @@ vec3 colorCalc(Hit hit, vec3 P0)
 void main()
 {	
 	vec3 tmpPosition = position1;
-	tmpPosition.x += offset_x;
-	tmpPosition.y += offset_y;
+	// tmpPosition.x += offset_x;
+	// tmpPosition.y += offset_y;
 	tmpPosition = tmpPosition * zoom;
 	vec3 v =normalize(tmpPosition - eye.xyz);
 	Hit hit = findIntersection(eye.xyz, v,-1);

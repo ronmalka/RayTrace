@@ -3,7 +3,7 @@
 #include "sceneParser.h"
 #include <glm/glm.hpp>
 
-#define INFINITY 1000.5693
+#define INFINITY 9999
 
 class raytrace : public Scene
 {
@@ -24,12 +24,16 @@ public:
 	void UpdatePosition( float xpos, float ypos);
 	void updatePressedPos(double xpos, double ypos);
 	void setNewOffset(double x, double y);
-	void updateSpherePosition(int index, double x, double y);
+	void updateSpherePosition(int index, double x, double y,float move);
 	int findMinIntersection(glm::vec3 dir);
 	float isIntersectSphere(glm::vec3 dir, int oIndex);
 	bool solveQuadricEquasion(float a, float b, float c,  glm::vec2 &result);
 	inline void doZoom(double yoffset) { zoom = yoffset > 0 ? zoom * pow(0.5, yoffset) : zoom * pow(2, -yoffset); }
 	inline float getZoom() { return zoom; }
+	inline void setNormalX(float x) { normal_x = x; }
+	inline void setNormalY(float y) { normal_y = y; }
+	inline float getNormalX() { return normal_x; }
+	inline float getNormalY() { return normal_y; }
 	inline SceneData* getSceneData() { return scnData; }
 
 private:
@@ -39,6 +43,8 @@ private:
 	float old_y;
 	float offset_x;
 	float offset_y;
+	float normal_x;
+	float normal_y;
 	SceneData* scnData;
 };
 

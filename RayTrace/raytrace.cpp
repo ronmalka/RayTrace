@@ -79,8 +79,8 @@ void raytrace::Update(const glm::mat4 &MVP,const glm::mat4 &Model,const int  sha
 	s->SetUniform4f("ambient",scnData->ambient[0], scnData->ambient[1], scnData->ambient[2], scnData->ambient[3]);
 	s->SetUniform4i("sizes", scnData->sizes[0], scnData->sizes[1], scnData->sizes[2], scnData->sizes[3]);
 	s->SetUniform1f("zoom", zoom);
-	s->SetUniform1f("offset_x", offset_x);
-	s->SetUniform1f("offset_y", offset_y);
+	//s->SetUniform1f("offset_x", offset_x);
+	//s->SetUniform1f("offset_y", offset_y);
 	s->Unbind();
 }
 
@@ -98,11 +98,16 @@ void raytrace::setNewOffset(double xpos, double ypos) {
 	glGetIntegerv(GL_VIEWPORT, viewport);
 	offset_x += (xpos - old_x) / viewport[2];
 	offset_y += (old_y - ypos) / viewport[3];
-	offset_x = offset_x * 0.7;
-	offset_y = offset_y * 0.7;
+	offset_x = offset_x * 0.8;
+	offset_y = offset_y * 0.8;
+
+	scnData->eye.x += offset_x;
+	scnData->eye.y += offset_y;
+	old_x = xpos;
+	old_y = ypos;
 	
-	std::cout << " offset_x: " << offset_x << "\n" << std::endl;
-	std::cout << " offset_y: " << offset_y << "\n" << std::endl;
+	//std::cout << " offset_x: " << offset_x << "\n" << std::endl;
+	//std::cout << " offset_y: " << offset_y << "\n" << std::endl;
 
 }
 
@@ -121,8 +126,20 @@ bool raytrace::solveQuadricEquasion(float a, float b, float c, glm::vec2& result
 	return true;
 }
 
-void raytrace::updateSpherePosition(int index, double x, double y) {
+void raytrace::updateSpherePosition(int index, double x, double y,float move) {
+	int viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+	//float new_x = (x  / viewport[2]) - normal_x;
+	//float new_y = (y / viewport[3]) - normal_y;
 
+	float new_x = x - (viewport[2] / 2);
+	new_x = new_x / (viewport[2] / 2);
+
+	float new_y = y - (viewport[3] / 2);
+	new_y = -(new_y / (viewport[3] / 2));
+
+	scnData->objects[index].x += new_x*move*getZoom();
+	scnData->objects[index].y += new_y*move*getZoom();
 }
 
 float raytrace::isIntersectSphere(glm::vec3 dir, int oIndex) {
@@ -162,7 +179,7 @@ int raytrace::findMinIntersection(glm::vec3 dir) {
 				}
 			}	
 	}
-	std::cout << "index: " << index << std::endl;
+	//if(index!=-1) std::cout << "index: " << index << std::endl;
 	return index;
 }
 
