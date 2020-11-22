@@ -66,10 +66,6 @@ void raytrace::Update(const glm::mat4 &MVP,const glm::mat4 &Model,const int  sha
 	//s->SetUniform1i("sampler1", materials[shapes[pickedShape]->GetMaterial()]->GetSlot(0));
 	if(shaderIndx!=1)
 		s->SetUniform1i("sampler2", materials[shapes[pickedShape]->GetMaterial()]->GetSlot(1));
-	//s->SetUniform1ui("counter", counter);
-	//s->SetUniform1f("x", x);
-	//s->SetUniform1f("y", y);
-	//s->SetUniform1ui("power", power);
 	s->SetUniform4fv("objects",scnData->objects.data(),scnData->objects.size());
 	s->SetUniform4fv("objColors", scnData->colors.data(), scnData->colors.size());
 	s->SetUniform4fv("lightsDirection", scnData->directions.data(), scnData->directions.size());
@@ -106,9 +102,6 @@ void raytrace::setNewOffset(double xpos, double ypos) {
 	old_x = xpos;
 	old_y = ypos;
 	
-	//std::cout << " offset_x: " << offset_x << "\n" << std::endl;
-	//std::cout << " offset_y: " << offset_y << "\n" << std::endl;
-
 }
 
 void raytrace::updatePressedPos(double xpos, double ypos) {
@@ -129,8 +122,6 @@ bool raytrace::solveQuadricEquasion(float a, float b, float c, glm::vec2& result
 void raytrace::updateSpherePosition(int index, double x, double y,float move) {
 	int viewport[4];
 	glGetIntegerv(GL_VIEWPORT, viewport);
-	//float new_x = (x  / viewport[2]) - normal_x;
-	//float new_y = (y / viewport[3]) - normal_y;
 
 	float new_x = x - (viewport[2] / 2);
 	new_x = new_x / (viewport[2] / 2);
@@ -179,13 +170,11 @@ int raytrace::findMinIntersection(glm::vec3 dir) {
 				}
 			}	
 	}
-	//if(index!=-1) std::cout << "index: " << index << std::endl;
 	return index;
 }
 
 void raytrace::WhenRotate()
 {
-	//std::cout << "x "<<x<<", y "<<y<<std::endl;
 	
 }
 

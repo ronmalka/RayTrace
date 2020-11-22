@@ -48,7 +48,6 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 			glm::vec3 dir(glm::vec3(normal_x, normal_y, 0)*scn->getZoom() - eye);
 			index = scn->findMinIntersection(glm::normalize(dir));
 
-			//if(index!=-1) scn->updateSpherePosition(index, xpos, ypos,0);
 		}
 		else {
 			if (index != -1) {
