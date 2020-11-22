@@ -130,7 +130,7 @@ bool isOccluded(vec3 P0, int lightIndex,int currObject){
             if(length(hit.hitPoint - P0) < length(spot.xyz - P0))
                 return true;
         }
-		else{
+		else if (objects[hit.hitIndex].w > 0){
 			return true;
 		}
 	}
@@ -153,13 +153,13 @@ vec3 colorCalc(Hit hit, vec3 P0)
 			if(p.x * p.y >=0){
 				if((mod(int(1.5*p.x),2) == mod(int(1.5*p.y),2)))
 				{
-					Kd*=0.5;
+					Ks = Ka = Kd*=0.5;
 				}
 			}
 			else{
 				if((mod(int(1.5*p.x),2) != mod(int(1.5*p.y),2)))
 				{
-					Kd*=0.5;
+					Ks = Ka = Kd*=0.5;
 				}
 			}
 		}
