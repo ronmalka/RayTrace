@@ -29,7 +29,7 @@ float isIntersectPlane(vec3 P0,vec3 V, int oIndex)
 {
     vec4 plane = objects[oIndex];
 	vec3 N = normalize(plane.xyz); 
-    vec3 Q0 = vec3(0,0,-plane.w/plane.z); //point on Plane
+    vec3 Q0 = plane.z!=0 ? (vec3(0,0,-plane.w/plane.z)) : ( plane.y!=0 ? vec3(0,-plane.w/plane.y,0) : vec3(-plane.w/plane.x,0,0));//point on Plane
     float t = dot(N,(Q0-P0)/dot(N,V));
 
     if(t<=0) return INFINITY;
@@ -150,17 +150,13 @@ vec3 colorCalc(Hit hit, vec3 P0)
 		if(objects[hit.hitIndex].w < 0)
 		{
 			vec3 p= hit.hitPoint;
-			if(p.x * p.y >=0){
-				if((mod(int(1.5*p.x),2) == mod(int(1.5*p.y),2)))
-				{
-					Ks = Ka = Kd*=0.5;
-				}
+			if(p.x * p.y >=0 && mod(int(1.5*p.x),2) == mod(int(1.5*p.y),2)){
+				Ka = Kd*=0.5;
+				Ks *=0.5;
 			}
-			else{
-				if((mod(int(1.5*p.x),2) != mod(int(1.5*p.y),2)))
-				{
-					Ks = Ka = Kd*=0.5;
-				}
+			else if(p.x * p.y < 0 && mod(int(1.5*p.x),2) != mod(int(1.5*p.y),2)){
+				Ka = Kd*=0.5;
+				Ks *=0.5;
 			}
 		}
 		for(int i = 0; i < sizes.y; i++){
