@@ -29,6 +29,16 @@ float isIntersectPlane(vec3 P0,vec3 V, int oIndex)
 {
     vec4 plane = objects[oIndex];
 	vec3 N = normalize(plane.xyz); 
+	vec3 point;
+	if(plane.z!=0){
+		point = vec3(0,0,-plane.w/plane.z);
+	}
+	else if(plane.y!=0){
+		point = vec3(0,-plane.w/plane.y,0);
+	}
+	else{
+		point = vec3(-plane.w/plane.x,0,0);
+	}
     vec3 Q0 = vec3(0,0,-plane.w/plane.z); //point on Plane
     float t = dot(N,(Q0-P0)/dot(N,V));
 
@@ -144,9 +154,9 @@ vec3 colorCalc(Hit hit, vec3 P0)
 		vec3 Ka = objColors[hit.hitIndex].xyz;
 		vec3 Kd = Ka;
 		vec3 Ks = vec3(0.7,0.7,0.7);
-		vec3 color = vec3(0,0,0);
 		vec3 diffuse = vec3(0,0,0);
 		vec3 specular = vec3(0,0,0);
+		vec3 color = vec3(0,0,0);
 		if(objects[hit.hitIndex].w < 0)
 		{
 			vec3 p= hit.hitPoint;
