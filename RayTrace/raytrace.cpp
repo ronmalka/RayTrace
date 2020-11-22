@@ -79,8 +79,8 @@ void raytrace::Update(const glm::mat4 &MVP,const glm::mat4 &Model,const int  sha
 	s->SetUniform4f("ambient",scnData->ambient[0], scnData->ambient[1], scnData->ambient[2], scnData->ambient[3]);
 	s->SetUniform4i("sizes", scnData->sizes[0], scnData->sizes[1], scnData->sizes[2], scnData->sizes[3]);
 	s->SetUniform1f("zoom", zoom);
-	//s->SetUniform1f("offset_x", offset_x);
-	//s->SetUniform1f("offset_y", offset_y);
+	s->SetUniform1f("offset_x", offset_x);
+	s->SetUniform1f("offset_y", offset_y);
 	s->Unbind();
 }
 

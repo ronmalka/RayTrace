@@ -9,6 +9,8 @@ uniform vec4[10] lightsIntensity;
 uniform vec4[10] lightPosition;
 uniform ivec4 sizes; //{number of objects , number of lights , mirrors}  
 uniform float zoom;
+uniform float offset_x;
+uniform float offset_y;
 in vec3 position1;
 
 #define LEVELS 5
@@ -77,9 +79,9 @@ vec4 getSpotlight(int index){
 
 Hit findIntersection(vec3 sourcePoint,vec3 V, int currObject)
 {
-	Hit ans;
+	Hit hit;
+	hit.t = INFINITY;
 	float t = 0;
-	ans.t = INFINITY;
 	for(int i = 0; i < sizes[0]; i++){
         if(i!=currObject){
             if(objects[i].w > 0.0){
@@ -88,20 +90,20 @@ Hit findIntersection(vec3 sourcePoint,vec3 V, int currObject)
             else{
                 t = isIntersectPlane(sourcePoint,V, i);
             }
-            if(t < ans.t){
-                ans.t=t;
-                ans.hitIndex = i;
+            if(t < hit.t){
+				hit.hitIndex = i;
+                hit.t=t;
             }
         }
 	}
-	ans.hitPoint = sourcePoint + ans.t*V;
-    if(objects[ans.hitIndex].w > 0.0){
-        ans.normal = normalize(ans.hitPoint - objects[ans.hitIndex].xyz);
+	hit.hitPoint = sourcePoint + hit.t*V;
+    if(objects[hit.hitIndex].w > 0.0){
+        hit.normal = normalize(hit.hitPoint - objects[hit.hitIndex].xyz);
 	}
     else{
-		ans.normal = normalize(-objects[ans.hitIndex].xyz);
+		hit.normal = normalize(-objects[hit.hitIndex].xyz);
 	}
-    return ans;
+    return hit;
     
 }
 
@@ -151,17 +153,17 @@ vec3 colorCalc(Hit hit, vec3 P0)
 			if(p.x * p.y >=0){
 				if((mod(int(1.5*p.x),2) == mod(int(1.5*p.y),2)))
 				{
-					Ka=0.5*Ka;
+					Kd*=0.5;
 				}
 			}
 			else{
 				if((mod(int(1.5*p.x),2) != mod(int(1.5*p.y),2)))
 				{
-					Ka=0.5*Ka;
+					Kd*=0.5;
 				}
 			}
 		}
-		for(int i = 0; i < sizes[1]; i++){
+		for(int i = 0; i < sizes.y; i++){
 			if(!isOccluded(hit.hitPoint, i, hit.hitIndex)){
 				vec3 L;
 				vec3 N = hit.normal;
@@ -206,8 +208,8 @@ vec3 colorCalc(Hit hit, vec3 P0)
 void main()
 {	
 	vec3 tmpPosition = position1;
-	// tmpPosition.x += offset_x;
-	// tmpPosition.y += offset_y;
+	tmpPosition.x += offset_x;
+	tmpPosition.y += offset_y;
 	tmpPosition = tmpPosition * zoom;
 	vec3 v =normalize(tmpPosition - eye.xyz);
 	Hit hit = findIntersection(eye.xyz, v,-1);
