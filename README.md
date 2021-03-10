@@ -1,6 +1,6 @@
 # RayTrace
 
-This assignment has been made as a part of the Computer Graphics course that I took in my bachelor's degree in computer science at Ben-Gurion University.
+This assignment has been made as a part of the Computer Graphics course that I took in my bachelor's degree in computer science at Ben-Gurion University. This assignment was made with OpenGL and C++.
 
 The concept of ray tracing: a technique for generating an image by tracing the path of light through pixels in an image plane and simulating the effects of its encounters with virtual objects.
 The technique can produce a very high degree of visual realism, usually higher than that of typical scan line rendering methods, but at a greater computational cost.
